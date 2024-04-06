@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "Send to Freebox"
+  },
+  "extensionDescription": {
+    "message": "Permet d'envoyer un lien Torrent à la Freebox afin qu'il soit téléchargé."
+  },
+  "menuContextSendLink": {
+    "message": "Envoyer à la Freebox"
+  }
+}

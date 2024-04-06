@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+  "name": "SendToFreebox",
+  "version": "2.0",
+  "description": "Envoie un lien vers la Freebox pour être téléchargé",
+  "default_locale": "fr",
+  "browser_specific_settings": {
+    "gecko": {
+      "strict_min_version": "57.0",
+      "id": "SendToFreebox@SendToFreebox.com"
+    }
+  },
+  "icons": {
+    "32": "icons/32_download.png",
+    "48": "icons/48_download.png",
+    "96": "icons/96_download.png",
+    "128": "icons/128_download.png"
+  },
+  "options_ui": {
+    "page": "popup/popup.html"
+  },
+  "permissions": [
+    "menus",
+    "contextMenus",
+    "storage",
+    "http://*/",
+    "https://*/"
+  ],
+  "browser_action": {
+    "default_icon": "icons/32_download.png",
+    "default_title": "Send To Freebox",
+    "default_popup": "popup/popup.html",
+    "browser_style": true
+  },
+  "background":  {
+    "scripts": ["common.js", "SendLink.js", "sha1.js"]
+  }
+}

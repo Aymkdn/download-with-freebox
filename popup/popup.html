@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css"/>
+</head>
+<body>
+  <!-- si une erreur, on l'affiche ici -->
+  <div id="error" style="display:none">
+  </div>
+  <!-- le bloc ci-dessous apparait si l'addon n'est pas encore configuré -->
+  <div id="not-configured-yet">
+    <h1>Configuration</h1>
+    <div id="step1" class="step">
+      <p>Vous devez autoriser l'addon sur le Freebox Serveur.<br>Cliquez sur "Commencer" :</p>
+      <p><button type="button">Commencer</button></p>
+      <details>
+        <summary>Avancé</summary>
+        <label for="server-url">Url de la Freebox:</label>
+        <input type="text" id="server-url"/>
+        <small>(permet l'accès à distance avec votre propre nom de domaine)</small>
+      </details>
+    </div>
+    <div id="step2" class="step" style="display:none">
+      <p>Validez l'application depuis l'écran tactile de votre Freebox Serveur :</p>
+      <div>
+        <img src="images/auth_app_v6.gif" style="width:200px">
+        <img src="images/auth_app_v7.gif" style="width:200px">
+      </div>
+      <p><div class="donut-spinner"></div><span>En attente de la validation…</span></p>
+    </div>
+    <div id="step3" class="step" style="display:none">
+      <p>Cliquez sur le bouton ci-dessous pour recommencer :</p>
+      <p><button type="button">Recommencer</button></p>
+    </div>
+  </div>
+  <!-- le bloc ci-dessous apparait si l'addon est déja configuré -->
+  <div id="configured" style="display:none">
+    <h1>Liste des Téléchargements</h1>
+    <p id="none">Aucun téléchargement en cours.</p>
+    <table id="downloads">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Statut</th>
+          <th>Progression</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- pour la modal -->
+  <div id="loading" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <div class="donut-spinner"></div><span>Chargement…</span>
+    </div>
+  </div>
+  <script src="../common.js"></script>
+  <script src="../sha1.js"></script>
+  <script src="popup.js"></script>
+  <!-- <script src="ListDownload.js"></script> -->
+</body>
+</html>

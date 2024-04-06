@@ -1,0 +1,17 @@
+{
+  "extensionName": {
+    "message": "Send To Freebox",
+    "description": "Send download link to Freebox downloads."
+  },
+
+  "extensionDescription": {
+    "message": "Send Link to Freebox Download.",
+    "description": "Send download link to Freebox downloads."
+  },
+
+  "menuContextSendLink": {
+    "message": "Send Link to Freebox Download.",
+    "description": "Send download link to Freebox downloads."
+  }
+
+}
