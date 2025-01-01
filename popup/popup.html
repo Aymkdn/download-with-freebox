@@ -16,7 +16,7 @@
       <p><button type="button">Commencer</button></p>
       <details>
         <summary>Avancé</summary>
-        <label for="server-url">Url de la Freebox:</label>
+        <label for="server-url">URL de la Freebox:</label>
         <input type="text" id="server-url"/>
         <small>(permet l'accès à distance avec votre propre nom de domaine)</small>
       </details>
@@ -27,7 +27,7 @@
         <img src="images/auth_app_v6.gif" style="width:200px">
         <img src="images/auth_app_v7.gif" style="width:200px">
       </div>
-      <p><div class="donut-spinner"></div><span>En attente de la validation…</span></p>
+      <p><div class="donut"><div class="donut-spinner"></div><span>En attente de la validation…</span></div></p>
     </div>
     <div id="step3" class="step" style="display:none">
       <p>Cliquez sur le bouton ci-dessous pour recommencer :</p>
@@ -55,12 +55,10 @@
   <div id="loading" class="modal">
     <!-- Modal content -->
     <div class="modal-content">
-      <div class="donut-spinner"></div><span>Chargement…</span>
+      <div class="donut"><div class="donut-spinner"></div><span>Chargement…</span></div>
     </div>
   </div>
   <script src="../common.js"></script>
-  <script src="../sha1.js"></script>
   <script src="popup.js"></script>
-  <!-- <script src="ListDownload.js"></script> -->
 </body>
 </html>

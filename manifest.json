@@ -1,38 +1,41 @@
 {
-  "manifest_version": 2,
-  "name": "SendToFreebox",
-  "version": "2.0",
+  "manifest_version": 3,
+  "name": "download-with-freebox",
+  "version": "3.0.0",
   "description": "Envoie un lien vers la Freebox pour être téléchargé",
-  "default_locale": "fr",
   "browser_specific_settings": {
     "gecko": {
-      "strict_min_version": "57.0",
-      "id": "SendToFreebox@SendToFreebox.com"
+      "id": "aymeric@kodono.info",
+      "strict_min_version": "121.0"
     }
   },
+  "default_locale": "fr",
   "icons": {
-    "32": "icons/32_download.png",
-    "48": "icons/48_download.png",
-    "96": "icons/96_download.png",
-    "128": "icons/128_download.png"
+    "32": "icons/icon_32.png",
+    "48": "icons/icon_48.png",
+    "96": "icons/icon_96.png",
+    "128": "icons/icon_128.png"
   },
-  "options_ui": {
-    "page": "popup/popup.html"
+  "action": {
+    "default_icon": "icons/icon_32.png",
+    "default_popup": "popup/popup.html"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "service_worker": "background.js"
   },
   "permissions": [
-    "menus",
     "contextMenus",
     "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
     "http://*/",
     "https://*/"
   ],
-  "browser_action": {
-    "default_icon": "icons/32_download.png",
-    "default_title": "Send To Freebox",
-    "default_popup": "popup/popup.html",
-    "browser_style": true
-  },
-  "background":  {
-    "scripts": ["common.js", "SendLink.js", "sha1.js"]
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
   }
 }

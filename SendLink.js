@@ -17,12 +17,12 @@ chrome.contextMenus.create({
     console.log(`Error: ${chrome.runtime.lastError}`);
   } else {
     // on reset le badge de l'extension
-    chrome.browserAction.setBadgeText({text:""});
+    chrome.action.setBadgeText({text:""});
     // on vérifie si l'addon est configuré
     chrome.storage.local.get(['settings'], function(res) {
       if (!res.settings || !res.settings.appToken) {
-        chrome.browserAction.setBadgeBackgroundColor({color:"#D32F2F"}); // red darken-1
-        chrome.browserAction.setBadgeText({text:"❕"});
+        chrome.action.setBadgeBackgroundColor({color:"#D32F2F"}); // red darken-1
+        chrome.action.setBadgeText({text:"❕"});
       } else {
         _settings = res.settings;
       }
@@ -64,8 +64,8 @@ chrome.storage.onChanged.addListener(() => {
  * @param  {String} err Le message d'erreur
  */
 function handleError(err) {
-  chrome.browserAction.setBadgeBackgroundColor({color:"#EF9A9A"}); // rouge
-  chrome.browserAction.setBadgeText({text:"Err"});
+  chrome.action.setBadgeBackgroundColor({color:"#EF9A9A"}); // rouge
+  chrome.action.setBadgeText({text:"Err"});
   console.log(err);
 }
 
@@ -76,8 +76,8 @@ function handleError(err) {
  */
 async function sendURL(uri) {
   // on montre un badge pour indiquer que la demande est bien prise en compte
-  chrome.browserAction.setBadgeBackgroundColor({color:"#FFF"}); // blanc
-  chrome.browserAction.setBadgeText({text:"⏳"}); // 🔄
+  chrome.action.setBadgeBackgroundColor({color:"#FFF"}); // blanc
+  chrome.action.setBadgeText({text:"⏳"}); // 🔄
 
   // on ouvre une session pour avoir un token
   let res = await openSession();
@@ -102,8 +102,8 @@ async function sendURL(uri) {
     return;
   }
   // on affiche un +1
-  chrome.browserAction.setBadgeBackgroundColor({color:"#008000"}); // vert
-  chrome.browserAction.setBadgeText({text:"+1"});
+  chrome.action.setBadgeBackgroundColor({color:"#008000"}); // vert
+  chrome.action.setBadgeText({text:"+1"});
   watchQueue();
 }
 
@@ -113,12 +113,12 @@ async function watchQueue() {
   let inProgress = downloads.filter(res => !['stopped', 'stopping', 'error', 'done', 'seeding'].includes(res.status));
   // si tous les téléchargements sont terminés
   if (inProgress.length === 0 && downloads.length > 0) {
-    chrome.browserAction.setBadgeBackgroundColor({color:"#008000"}); // vert
-    chrome.browserAction.setBadgeText({text:"✓"});
+    chrome.action.setBadgeBackgroundColor({color:"#008000"}); // vert
+    chrome.action.setBadgeText({text:"✓"});
   } else if (inProgress.length > 0) {
     // on affiche le nombre de téléchargement en cours badge
-    chrome.browserAction.setBadgeBackgroundColor({color:"#48D1CC"}); // medium turquoise
-    chrome.browserAction.setBadgeText({text:"▼"+inProgress.length});
+    chrome.action.setBadgeBackgroundColor({color:"#48D1CC"}); // medium turquoise
+    chrome.action.setBadgeText({text:"▼"+inProgress.length});
     // et on relance dans 3 secondes
     await timeout(3000);
     watchQueue();

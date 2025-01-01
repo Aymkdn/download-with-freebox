@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Options de l'extension</title>
+  <style>
+    body {
+      font-family: Roboto, Arial, sans-serif;
+      width:450px;
+      box-sizing: border-box;
+      margin-top: 0;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    label {
+      font-weight: bold;
+      flex-basis: 153px;
+    }
+    label + * {
+      flex-grow: 1;
+    }
+    #domain {
+      width: 250px;
+      text-align: center;
+    }
+    .fields {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .fields + .fields {
+      margin-top:5px;
+    }
+    #appToken {
+      background-color: #EEE;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Options de l'extension</h1>
+  <div class="fields">
+    <label for="domain">URL d'accès à la Freebox :</label>
+    <input type="text" id="domain" />
+  </div>
+  <div class="fields">
+    <label for="appToken">App Token :</label>
+    <textarea id="appToken" readonly></textarea>
+  </div>
+  <div style="text-align:center;margin-top:10px">
+    <button type="button" id="saveBtn">Sauvegarder</button>
+  </div>
+  <script src="./common.js"></script>
+  <script src="./options.js"></script>
+</body>
+</html>

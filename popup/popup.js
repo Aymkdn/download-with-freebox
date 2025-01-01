@@ -19,7 +19,7 @@ function run() {
   hideElem('#none');
   hideElem('#downloads');
   // supprime le badge en cours
-  chrome.browserAction.setBadgeText({text:""});
+  chrome.action.setBadgeText({text:""});
 
   // on bind les boutons
   // "Commencer"
@@ -27,7 +27,7 @@ function run() {
     // on cache la step 1 et montre la 2
     hideElem('#step1');
     showElem('#step2');
-    requestAuthorization();
+    requestAuthorization(document.getElementById('server-url').value);
   });
   // Recommencer
   document.querySelector('#step3 button').addEventListener("click", () => {
@@ -35,88 +35,61 @@ function run() {
     showElem('#step1');
     // on enlève le message d'erreur
     hide('#error');
-    requestAuthorization();
+    requestAuthorization(document.getElementById('server-url').value);
   });
 
   // on vérifie si l'addon a déjà été configuré
-  chrome.storage.local.get(['settings'], async function(res) {
-    if (!res.settings || !res.settings.appToken) {
+  getSettings()
+  .then(settings => {
+    if (!settings || !settings.appToken) {
       // non pas encore configuré
       showElem('#step1');
       showElem('#not-configured-yet');
-      document.getElementById('server-url').value = _settings.domain;
+      document.getElementById('server-url').value = settings.domain || _defaultDomain;
       hideLoading();
     } else {
       // déja configuré
       showElem('#configured');
-      _settings = res.settings;
       showDownloads();
     }
   });
 }
 document.addEventListener('DOMContentLoaded', run);
 
-// on demande l'autorisation au serveur
-async function requestAuthorization() {
-  await setSettings({domain: document.getElementById('server-url').value })
-  let baseUrl = await getBaseUrl();
-  let response = await fetch(baseUrl+"/login/authorize/", {
-    credentials:'omit',
-    method:"POST",
-    body: JSON.stringify({
-       "app_id": _app.id,
-       "app_name": _app.name,
-       "app_version": _app.version,
-       "device_name": "Browser"
-    })
-  });
-  let data = await response.json();
-  // erreur ?
-  if (!data.success) {
-    handleError(data.msg);
-    return;
-  }
+// on demande à background.js de faire une demande d'autorisation
+function requestAuthorization(domain) {
+  chrome.runtime.sendMessage({ action: "requestAuthorization", data:domain })
+  .then(async result => {
+    if (result.error) handleError(result.error);
+    else {
+      let appToken = result.app_token;
+      // résultat ?
+      if (result.status === "granted") {
+        await setSettings({appToken:appToken});
+        hideElem('#not-configured-yet');
+        showElem('#configured');
+        // change le badge
+        chrome.action.setBadgeBackgroundColor({color:"#008000"}); // vert
+        chrome.action.setBadgeText({text:"✓"});
+        // puis supprime le au bout de 5 secondes
+        setTimeout(() => {
+          chrome.action.setBadgeText({text:""});
+        }, 5000);
+        // liste les téléchargements
+        showDownloads();
+        return;
+      }
 
-  // on attend que l'utilisateur ait validé
-  let appToken = data.result.app_token;
-  let trackId = data.result.track_id;
-  do {
-    await timeout(2000);
-    response = await fetch(baseUrl+"/login/authorize/"+trackId, {credentials:'omit'});
-    data = await response.json();
-
-    // erreur ?
-    if (!data.success) {
-      handleError(data.msg);
-      return;
+      setSettings({appToken:''});
+      hideElem('#step2');
+      showElem('#step3');
+      switch(result.status) {
+        case "unknown": return handleError("Problème avec le app_token");
+        case "timeout": return handleError("Vous avez mis trop de temps à valider l'application !");
+        case "denied": return handleError("Vous avez refusé l'application… Cet addon ne pourra donc pas fonctionner !");
+      }
     }
-  } while (data.result.status === "pending");
-
-  // résultat ?
-  if (data.result.status === "granted") {
-    await setSettings({appToken:appToken});
-    hideElem('#not-configured-yet');
-    showElem('#configured');
-    // change le badge
-    chrome.browserAction.setBadgeBackgroundColor({color:"#008000"}); // vert
-    chrome.browserAction.setBadgeText({text:"✓"});
-    // puis supprime le au bout de 5 secondes
-    setTimeout(() => {
-      chrome.browserAction.setBadgeText({text:""});
-    }, 5000);
-    // liste les téléchargements
-    showDownloads();
-    return;
-  }
-
-  setSettings({appToken:''});
-  hideElem('#step2');
-  showElem('#step3');
-  switch(data.result.status) {
-    case "unknown": return handleError("Problème avec le app_token");
-    case "timeout": return handleError("Vous avez mis trop de temps à valider l'application !");
-    case "denied": return handleError("Vous avez refusé l'application… Cet addon ne pourra donc pas fonctionner !");
-  }
+  })
 }
 
 function handleError(err) {
@@ -126,8 +99,9 @@ function handleError(err) {
   el.style.display='block';
   el.innerHTML = "Erreur : " + err;
   // si le token de l'application n'est plus bon, on va proposer de recommencer
-  if (err === "Erreur d'authentification de l'application") {
+  if (["Vous devez vous connecter pour accéder à cette fonction", "Erreur d'authentification de l'application", "Erreur d’authentification de l’application"].includes(err)) {
     if (_timeout) clearTimeout(_timeout); // stop showDownloads()
+    getSettings().then(settings => document.getElementById('server-url').value = settings.domain || _defaultDomain);
     showElem('#step1');
     showElem('#not-configured-yet');
     hideElem('#configured');
@@ -165,7 +139,15 @@ async function showDownloads() {
     _timeout=null;
   }
   try {
-    let downloads = await getListDownloads();
+    // on demande à background.js de fournir la liste des téléchargements en cours
+    let downloads = await new Promise((promiseOK, promiseKO) => {
+      chrome.runtime.sendMessage({ action: "getListDownloads" }, (response) => {
+        if (response.downloads) promiseOK(response.downloads);
+        else if (response.error) promiseKO(response.error);
+        else promiseKO("Erreur inconnue: " + JSON.stringify(response));
+      });
+    });
+
     hideLoading();
     if (!downloads || downloads.length === 0) {
       showElem('#none');
@@ -192,9 +174,9 @@ async function showDownloads() {
           case "retry": status="Nouvel Essai"; break;
         }
         html.push(`<tr>
-          <td style="border-bottom-width:0">${shortFilename}</td>
-          <td style="border-bottom-width:0">${status==='Téléchargement'?'<div class="donut-spinner" style="border-width:2px"></div><span>Téléchargement</span>':status}</td>
-          <td style="border-bottom-width:0">${Math.round(res.rx_pct/100)}%
+          <td style="border-bottom-width:0;white-space:nowrap">${shortFilename}</td>
+          <td style="border-bottom-width:0;white-space:nowrap">${status==='Téléchargement'?'<div class="donut"><div class="donut-spinner" style="border-width:2px"></div><span>Téléchargement</span></div>':status}</td>
+          <td style="border-bottom-width:0;white-space:nowrap">${Math.round(res.rx_pct/100)}%
         </tr>
         <tr>
           <td colspan="3" style="text-align:right">
@@ -236,36 +218,17 @@ async function showDownloads() {
 // permet de mettre à jour le status d'une tâche
 async function updateTaskStatus(taskId, status) {
   showLoading();
-  let params = {
-    credentials:'omit',
-    headers:{
-      "X-Fbx-App-Auth": _sessionToken
-    }
-  };
-  // si on veut finir
-  if (status === 'end') {
-    params.method="DELETE";
-  } else {
-    params.method="PUT";
-    params.body = JSON.stringify({
-      "status": status
-    })
-  }
 
-  let baseUrl = await getBaseUrl();
-  let response = await fetch(baseUrl+"/downloads/"+taskId, params);
-  let data = await response.json();
-  // erreur ?
-  if (!data.success) {
-    // a-t-on besoin de s'identifier ?
-    if (data.error_code === "auth_required") {
-      await openSession();
-      return updateTaskStatus();
-    } else {
-      showDownloads();
-      handleError(data.msg);
-      return;
-    }
+  try {
+    // on demande à background.js de le faire
+    let data = await new Promise((promiseOK, promiseKO) => {
+      chrome.runtime.sendMessage({ action: "updateTaskStatus", data:{taskId, status} }, (response) => {
+        if (response.error) promiseKO(response.error);
+        else promiseOK(response);
+      });
+    });
+  } finally {
+    showDownloads();
   }
-  showDownloads();
 }
+

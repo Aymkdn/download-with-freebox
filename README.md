@@ -1,14 +1,20 @@
-# SendToFreebox
+# Download With Freebox
+
+(sur une idée originale de https://github.com/garoloup/SendToFreebox)
 
 Cette extension permet les fonctions suivantes :
 
   - Clic droit sur une URL pour envoyer vers l'appli _Téléchargement_ du Freebox Serveur
   - Lister les téléchargements en cours
   - Gestion simple des téléchargements
+  
+## Différences avec `SendToFreebox`
+
+Le code a été mis à jour, et le développeur d'origine n'ayant plus de Freebox, plus d'évolution n'était possible pour cette extension.
 
 ## Droits sur FreeboxOS
 
-À noter que cette extension va ajouter une application sur votre Freebox (http://mafreebox.freebox.fr > "Paramètres de la Freebox" > "Mode Avancé" > "Gestion des Accès" > "Applications") nommée "SendToFreebox 4 Extension".
+À noter que cette extension va ajouter une application sur votre Freebox (http://mafreebox.freebox.fr > "Paramètres de la Freebox" > "Mode Avancé" > "Gestion des Accès" > "Applications") nommée "Download With Freebox".
 
 À savoir :
 
@@ -21,7 +27,7 @@ Concernant ce manque de choix pour l'application, vous pouvez aller vous plaindr
 
 ## Questions
 
-Si vous avez des questions, des problèmes ou des demandes d'amélioration, merci de soumettre une _issue_ sur la [page dédiée](https://github.com/garoloup/SendToFreebox/issues).
+Si vous avez des questions, des problèmes ou des demandes d'amélioration, merci de soumettre une _issue_ sur la [page dédiée](https://github.com/Aymkdn/download-with-freebox/issues).
 
 ## Développement
 
