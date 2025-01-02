@@ -148,6 +148,9 @@ async function showDownloads() {
       });
     });
 
+    // on lance watchQueue aussi
+    chrome.runtime.sendMessage({ action: "watchQueue" });
+
     hideLoading();
     if (!downloads || downloads.length === 0) {
       showElem('#none');
@@ -174,7 +177,7 @@ async function showDownloads() {
           case "retry": status="Nouvel Essai"; break;
         }
         html.push(`<tr>
-          <td style="border-bottom-width:0;white-space:nowrap">${shortFilename}</td>
+          <td class="torrent-name" style="border-bottom-width:0;">${shortFilename}</td>
           <td style="border-bottom-width:0;white-space:nowrap">${status==='Téléchargement'?'<div class="donut"><div class="donut-spinner" style="border-width:2px"></div><span>Téléchargement</span></div>':status}</td>
           <td style="border-bottom-width:0;white-space:nowrap">${Math.round(res.rx_pct/100)}%
         </tr>

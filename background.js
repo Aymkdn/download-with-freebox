@@ -27,6 +27,8 @@ var _settings = {
 var _sessionToken = null;
 // l'url de base
 var _baseUrl = "";
+// pour savoir si watchQueue est en cours
+var _watchQueueInProgress = false;
 
 // Permet de trouver l'URL de base pour les API
 async function getBaseUrl() {
@@ -41,6 +43,7 @@ async function getBaseUrl() {
 
 /// Va permettre de récupérer le token de session
 async function openSession() {
+  if (!_settings.appToken) _settings = await getSettings();
   // on récupère le challenge
   let baseUrl = await getBaseUrl();
   let response = await fetch(baseUrl+"/login/", {credentials:'omit'});
@@ -185,12 +188,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ error: err })
     });
   }
+  else if (message.action === "watchQueue") {
+    if (!_watchQueueInProgress) watchQueue();
+    sendResponse();
+  }
 
   // Indique que la réponse est asynchrone
   return true;
 });
 
 async function getListDownloads() {
+  console.log("getListDownloads !");
   let baseUrl = await getBaseUrl();
   // on récupère tous les téléchargements en cours
   let response = await fetch(baseUrl+"/downloads/", {
@@ -368,17 +376,19 @@ async function sendURL(uri) {
   // on affiche un +1
   chrome.action.setBadgeBackgroundColor({color:"#008000"}); // vert
   chrome.action.setBadgeText({text:"+1"});
-  watchQueue();
+  if (!_watchQueueInProgress) watchQueue();
 }
 
 // Va permettre de surveiller la liste des téléchargements et de prévenir quand c'est terminé
 async function watchQueue() {
+  _watchQueueInProgress = true;
   let downloads = await getListDownloads();
   let inProgress = downloads.filter(res => !['stopped', 'stopping', 'error', 'done', 'seeding'].includes(res.status));
   // si tous les téléchargements sont terminés
   if (inProgress.length === 0 && downloads.length > 0) {
     chrome.action.setBadgeBackgroundColor({color:"#008000"}); // vert
     chrome.action.setBadgeText({text:"✓"});
+    _watchQueueInProgress = false;
   } else if (inProgress.length > 0) {
     // on affiche le nombre de téléchargement en cours badge
     chrome.action.setBadgeBackgroundColor({color:"#48D1CC"}); // medium turquoise

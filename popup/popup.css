@@ -13,6 +13,7 @@
 .donut {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
 }
 .donut-spinner {
@@ -51,9 +52,10 @@ html, body {
 .modal-content {
   background-color: #fefefe;
   margin: auto;
-  padding: 20px;
+  padding: 10px 0;
   border: 1px solid #888;
-  width: 80%;
+  width: 160px;
+  border-radius: 10px;
 }
 
 /* body */
@@ -82,8 +84,6 @@ h1 {
 /* downlaods */
 #downloads {
   background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
   position: relative;
   font-size: 1em;
@@ -122,4 +122,10 @@ h1 {
   border: 1px solid #eee;
   padding: 0.4em 0.7em;
   vertical-align: middle;
+}
+.torrent-name {
+  max-width: 65vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
