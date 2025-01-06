@@ -20,8 +20,10 @@ var _app = {
 // settings
 var _settings = {
   appToken: "", // le app_token
-  downloadDir: "", // le répertoire du téléchargement
+  downloadDir: "", // le répertoire du téléchargement – non utilisé
   domain: _defaultDomain, // le domaine de la freebox
+  regExp: "", // si l'on souhaite modifier des URL via une regexp avant qu'elles ne soient traitées par la Freebox
+  replaceWith: "" // utilisé avec regExp
 }
 // va stocker le token de session
 var _sessionToken = null;

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "download-with-freebox",
+  "name": "Download via Freebox",
   "version": "3.0.0",
   "description": "Envoie un lien vers la Freebox pour être téléchargé",
   "browser_specific_settings": {
