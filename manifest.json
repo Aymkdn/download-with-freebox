@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Download via Freebox",
   "version": "3.0.0",
-  "description": "Envoie un lien vers la Freebox pour être téléchargé",
+  "description": "Envoi un lien vers la Freebox pour être téléchargé",
   "browser_specific_settings": {
     "gecko": {
       "id": "aymeric@kodono.info",
@@ -28,7 +28,8 @@
     "contextMenus",
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "host_permissions": [
     "http://*/",
@@ -36,6 +37,9 @@
   ],
   "options_ui": {
     "page": "options.html",
-    "open_in_tab": false
+    "open_in_tab": true
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://mafreebox.freebox.fr https://mafreebox.freebox.fr"
   }
 }

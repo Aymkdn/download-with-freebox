@@ -56,22 +56,22 @@
         <label style="display:block;font-size:small">expression régulière :</label>
         <div style="display:flex;align-items:center;gap:2px">
           <span>/</span>
-          <input type="text" id="regExp" placeholder="&example=(\d+)(&af=[^=&]+)">
+          <input type="text" id="regExp" placeholder="&(amp;)?example=(\d+)(&(amp;)?af=[^=&]+)">
           <span>/</span>
         </div>
       </div>
       <div>
         <label style="display:block;margin-top:5px;font-size:small">à remplacer par :</label>
-        <input type="text" id="replaceWith" placeholder="&example_id=$1">
+        <input type="text" id="replaceWith" placeholder="&example_id=$2">
       </div>
       <div style="margin-top:5px">
-        Voir exemple : <a href="https://regex101.com/r/J7XiQg/2" target="_blank" style="white-space:nowrap;">https://regex101.com/r/J7XiQg/2</a>
+        Voir exemple : <a href="https://regex101.com/r/D1hUHV/1" target="_blank" style="white-space:nowrap;">https://regex101.com/r/D1hUHV/1</a>
       </div>
     </div>
   </div>
   <div class="fields">
     <label for="appToken">Token de l'application :</label>
-    <textarea id="appToken" readonly></textarea>
+    <textarea id="appToken"></textarea>
   </div>
   <div style="text-align:center;margin-top:20px">
     <button type="button" id="saveBtn">Sauvegarder</button>

@@ -4,7 +4,7 @@ var _defaultDomain = "http://mafreebox.freebox.fr";
 function setSettings(settings) {
   // on demande à background.js d'enregistrer les settings
   return new Promise(promiseOK => {
-    chrome.runtime.sendMessage({ action: "setSettings", data:settings }, () => promiseOK());
+    chrome.runtime.sendMessage({ action: "setSettings", data:JSON.stringify(settings) }, () => promiseOK());
   });
 }
 

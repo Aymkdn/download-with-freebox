@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', run);
 function requestAuthorization(domain) {
   chrome.runtime.sendMessage({ action: "requestAuthorization", data:domain })
   .then(async result => {
-    if (result.error) handleError(result.error);
+    if (result.error) handleError(result.error, 'requestAuthorization');
     else {
       let appToken = result.app_token;
       // résultat ?
@@ -84,17 +84,21 @@ function requestAuthorization(domain) {
       hideElem('#step2');
       showElem('#step3');
       switch(result.status) {
-        case "unknown": return handleError("Problème avec le app_token");
-        case "timeout": return handleError("Vous avez mis trop de temps à valider l'application !");
-        case "denied": return handleError("Vous avez refusé l'application… Cet addon ne pourra donc pas fonctionner !");
+        case "unknown": return handleError("Problème avec le app_token", 'requestAuthorization');
+        case "timeout": return handleError("Vous avez mis trop de temps à valider l'application !", 'requestAuthorization');
+        case "denied": return handleError("Vous avez refusé l'application… Cet addon ne pourra donc pas fonctionner !", 'requestAuthorization');
       }
     }
   })
 }
 
-function handleError(err) {
+function handleError(err, origin) {
   hideLoading();
-  console.log(err);
+  if (err instanceof Error && err.message) {
+    err = err.message;
+    console.log('Error Stack:', err.stack);
+  }
+  console.log("Erreur provenant de "+origin, err);
   let el = document.querySelector('#error');
   el.style.display='block';
   el.innerHTML = "Erreur : " + err;
@@ -121,12 +125,8 @@ function showElem(id, type) {
    return filename from URL
 */
 function getFilenameOfURL(url) {
-  console.log("gFN URL="+url);
-
   var flna = url.split("/");
   var fileURL = flna[flna.length-1];
-
-  console.log("fileURL="+fileURL);
 
   return(fileURL);
 }
@@ -161,10 +161,10 @@ async function showDownloads() {
       let html = [];
       downloads.forEach(res => {
         let status = "Inconnu";
-        let shortFilename = res.name;
+        let filename = res.name;
         switch(res.status) {
           case "stopped": status="Pause"; break;
-          case "queued": status="En Attente"; shortFilename = getFilenameOfURL(res.name) ; break;
+          case "queued": status="En Attente"; filename = getFilenameOfURL(res.name) ; break;
           case "starting": status="Démarrage"; break;
           case "downloading": status="Téléchargement"; break;
           case "stopping": status="Arrêt en cours"; break;
@@ -177,7 +177,7 @@ async function showDownloads() {
           case "retry": status="Nouvel Essai"; break;
         }
         html.push(`<tr>
-          <td class="torrent-name" style="border-bottom-width:0;">${shortFilename}</td>
+          <td class="torrent-name" title="${res.name}" style="border-bottom-width:0;">${filename}</td>
           <td style="border-bottom-width:0;white-space:nowrap">${status==='Téléchargement'?'<div class="donut"><div class="donut-spinner" style="border-width:2px"></div><span>Téléchargement</span></div>':status}</td>
           <td style="border-bottom-width:0;white-space:nowrap">${Math.round(res.rx_pct/100)}%
         </tr>
@@ -214,7 +214,7 @@ async function showDownloads() {
     }
     _timeout = setTimeout(() => showDownloads(), 3000);
   } catch(err) {
-    handleError(err);
+    handleError(err, 'showDownloads');
   }
 }
 
@@ -225,7 +225,7 @@ async function updateTaskStatus(taskId, status) {
   try {
     // on demande à background.js de le faire
     let data = await new Promise((promiseOK, promiseKO) => {
-      chrome.runtime.sendMessage({ action: "updateTaskStatus", data:{taskId, status} }, (response) => {
+      chrome.runtime.sendMessage({ action: "updateTaskStatus", data:JSON.stringify({taskId, status}) }, (response) => {
         if (response.error) promiseKO(response.error);
         else promiseOK(response);
       });

@@ -20,7 +20,6 @@ var _app = {
 // settings
 var _settings = {
   appToken: "", // le app_token
-  downloadDir: "", // le répertoire du téléchargement – non utilisé
   domain: _defaultDomain, // le domaine de la freebox
   regExp: "", // si l'on souhaite modifier des URL via une regexp avant qu'elles ne soient traitées par la Freebox
   replaceWith: "" // utilisé avec regExp
@@ -31,6 +30,30 @@ var _sessionToken = null;
 var _baseUrl = "";
 // pour savoir si watchQueue est en cours
 var _watchQueueInProgress = false;
+
+
+// permet d'enregistrer les 'settings'
+function setSettings(settings) {
+  for (let key in settings) {
+    _settings[key] = settings[key];
+    // on enlève les "/" à la fin du domain
+    // à cause du self-signed certificat, on force mafreebox.freebox.fr à être en HTTP
+    if (key === "domain") _settings[key]=_settings[key].replace(/\/+$/, "").replace("https://mafreebox.freebox.fr", "http://mafreebox.freebox.fr");
+  }
+  // on enregistre durablement
+  return new Promise(res => {
+    chrome.storage.local.set({settings:_settings}, () => res());
+  });
+}
+
+// permet de récupérer les settings
+function getSettings() {
+  return new Promise(promiseOK => {
+    chrome.storage.local.get(['settings'], function(res) {
+      promiseOK(res.settings || _settings);
+    });
+  })
+}
 
 // Permet de trouver l'URL de base pour les API
 async function getBaseUrl() {
@@ -45,7 +68,6 @@ async function getBaseUrl() {
 
 /// Va permettre de récupérer le token de session
 async function openSession() {
-  if (!_settings.appToken) _settings = await getSettings();
   // on récupère le challenge
   let baseUrl = await getBaseUrl();
   let response = await fetch(baseUrl+"/login/", {credentials:'omit'});
@@ -113,94 +135,7 @@ async function requestAuthorization(domain) {
   return Object.assign({}, {app_token:appToken}, data.result);
 }
 
-// permet d'enregistrer les 'settings'
-function setSettings(settings) {
-  for (let key in settings) {
-    _settings[key] = settings[key];
-    // on enlève les "/" à la fin du domain
-    if (key === "domain") _settings[key]=_settings[key].replace(/\/+$/, "");
-  }
-  // on enregistre durablement
-  return new Promise(res => {
-    chrome.storage.local.set({settings:_settings}, () => res());
-  });
-}
-
-// permet de récupérer les settings
-function getSettings() {
-  return new Promise(promiseOK => {
-    chrome.storage.local.get(['settings'], function(res) {
-      promiseOK(res.settings || _settings);
-    });
-  })
-}
-
-// permet de communiquer avec popup.html
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // retourne la liste des downloads
-  if (message.action === "getListDownloads") {
-    getListDownloads()
-    .then(res => sendResponse({ downloads: res }))
-    .catch(err => sendResponse({ error: err }));
-  }
-  // enregistre les settings
-  else if (message.action === "setSettings") {
-    setSettings(message.data)
-    .then(() => sendResponse())
-    .catch(err => sendResponse({ error: err }));
-  }
-  // retourne les settings
-  else if (message.action === "getSettings") {
-    getSettings()
-    .then(settings => sendResponse(settings))
-    .catch(err => sendResponse({ error: err }));
-  }
-  // retourne les settings
-  else if (message.action === "requestAuthorization") {
-    requestAuthorization(message.data)
-    .then(result => {
-      sendResponse(result)
-    })
-    .catch(err => {
-      console.log(err);
-      if (typeof err === "object") {
-        if (err.msg) err=err.msg;
-        else if (typeof err.toString === "function") err=err.toString();
-        else err=JSON.stringify(err);
-      }
-      if (err === "TypeError: Failed to fetch") {
-        err = `La connexion avec le domaine "${_settings.domain}" a rencontré un problème. Vérifiez que l'URL indiquée est correcte et accessible.`;
-      }
-      sendResponse({ error: err })
-    });
-  }
-  // modifie le statut d'un tâche
-  else if (message.action === "updateTaskStatus") {
-    updateTaskStatus(message.data.taskId, message.data.status)
-    .then(result => {
-      sendResponse(result)
-    })
-    .catch(err => {
-      console.log(err);
-      if (typeof err === "object") {
-        if (err.msg) err=err.msg;
-        else if (typeof err.toString === "function") err=err.toString();
-        else err=JSON.stringify(err);
-      }
-      sendResponse({ error: err })
-    });
-  }
-  else if (message.action === "watchQueue") {
-    if (!_watchQueueInProgress) watchQueue();
-    sendResponse();
-  }
-
-  // Indique que la réponse est asynchrone
-  return true;
-});
-
 async function getListDownloads() {
-  console.log("getListDownloads !");
   let baseUrl = await getBaseUrl();
   // on récupère tous les téléchargements en cours
   let response = await fetch(baseUrl+"/downloads/", {
@@ -210,7 +145,6 @@ async function getListDownloads() {
     }
   });
   let data = await response.json();
-
   // erreur ?
   if (!data.success) {
     // a-t-on besoin de s'identifier ?
@@ -264,6 +198,16 @@ async function updateTaskStatus(taskId, status) {
   return data;
 }
 
+function getErrorMessage (error) {
+  if (error instanceof Error) {
+    console.log('Error Name:', error.name);
+    console.log('Error Message:', error.message);
+    console.log('Error Stack:', error.stack);
+    return error.message;
+  }
+  return error;
+}
+
 // permet d'attendre le délai indiqué
 function timeout(ms) {
   let timeoutId;
@@ -271,50 +215,6 @@ function timeout(ms) {
     timeoutId = setTimeout(() => res(timeoutId), ms);
   });
 }
-
-/**
- * Crée un context (clic droit de la souris) pour les liens
- * Documentation : https://developer.chrome.com/apps/contextMenus
- *
- * @param {Object} options:
- *   @param  {String} options.id:       "copy-link-to-clipboard"                      Unique ID utilisé pour identifier ce menu
- *   @param  {String} options.title:    chrome.i18n.getMessage("menuContextSendLink") Ce qui va apparaitre dans le menu (voir `./_locales/[lang]/`)
- *   @param  {Array} options.contexts: ["link"]                                       À quel contexte le menu doit apparaitre (ici pour les liens)
- * @param  {Function} callback:                                                       Un callback pour avertir des erreurs
- */
-chrome.contextMenus.create({
-  id: "copy-link-to-clipboard",
-  title: chrome.i18n.getMessage("menuContextSendLink"),
-  contexts: ["link"],
-}, () => {
-  if (chrome.runtime.lastError) {
-    console.log("Error:",chrome.runtime.lastError);
-  } else {
-    // on reset le badge de l'extension
-    chrome.action.setBadgeText({text:""});
-    // on vérifie si l'addon est configuré
-    getSettings()
-    .then(settings => {
-      if (!settings || !settings.appToken) {
-        chrome.action.setBadgeBackgroundColor({color:"#D32F2F"}); // red darken-1
-        chrome.action.setBadgeText({text:"❕"});
-      } else {
-        _settings = settings;
-      }
-    });
-  }
-});
-
-
-/**
- * L'action qui découle du clic sur le menu
- */
-chrome.contextMenus.onClicked.addListener(info => {
-  if (info.menuItemId === "copy-link-to-clipboard") {
-    const safeUrl = escapeHTML(info.linkUrl);
-    sendURL(safeUrl);
-  }
-});
 
 // https://gist.github.com/Rob--W/ec23b9d6db9e56b7e4563f1544e0d546
 function escapeHTML(str) {
@@ -325,12 +225,6 @@ function escapeHTML(str) {
          .replace(/"/g, "&quot;").replace(/'/g, "&#39;")
          .replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-
-// quand le storage de l'extension change, on veut appliquer les changements à nos variables locales
-chrome.storage.onChanged.addListener(() => {
-  getSettings()
-  .then(settings => _settings=settings);
-});
 
 /**
  * Pour gérer les erreurs : on va afficher un badge "Err" et envoyer une alert
@@ -357,6 +251,12 @@ async function sendURL(uri) {
   let res = await openSession();
   if (!res) return;
 
+  // on regarde si un regexp doit être appliqué
+  if (_settings.regExp) {
+    uri = uri.replace(new RegExp(_settings.regExp), _settings.replaceWith);
+  }
+  uri = encodeURIComponent(uri);
+
   let baseUrl = await getBaseUrl();
   // on envoie le lien dans la queue
   let response = await fetch(baseUrl+"/downloads/add", {
@@ -366,7 +266,7 @@ async function sendURL(uri) {
       "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
     },
     method:"POST",
-    body: "download_url=" + encodeURIComponent(uri) /*+ "&download_dir=" TODO: gérer le répertoire */
+    body: "download_url=" + uri /*+ "&download_dir=" TODO: gérer le répertoire */
   });
   let data = await response.json();
 
@@ -391,13 +291,23 @@ async function watchQueue() {
     chrome.action.setBadgeBackgroundColor({color:"#008000"}); // vert
     chrome.action.setBadgeText({text:"✓"});
     _watchQueueInProgress = false;
+    // on arrête l'alarme
+    chrome.alarms.clear("watchQueueAlarm");
   } else if (inProgress.length > 0) {
     // on affiche le nombre de téléchargement en cours badge
     chrome.action.setBadgeBackgroundColor({color:"#48D1CC"}); // medium turquoise
     chrome.action.setBadgeText({text:"▼"+inProgress.length});
-    // et on relance dans 3 secondes
-    await timeout(3000);
-    watchQueue();
+    // on vérifie si l'alarme existe
+    const alarm = await chrome.alarms.get("watchQueueAlarm");
+    if (!alarm) {
+      // avec Manifest v3 on doit utiliser des alarmes pour déclencher des tâches régulières en arrière plan
+      // au minimum l'alarme peut être déclenchée toutes les 30 secondes (voir https://developer.chrome.com/docs/extensions/reference/api/alarms?hl=fr)
+      chrome.alarms.create("watchQueueAlarm", { periodInMinutes: 0.5 });
+    }
+  } else if (inProgress.length === 0 && downloads.length === 0) {
+    _watchQueueInProgress = false;
+    // on arrête l'alarme
+    chrome.alarms.clear("watchQueueAlarm");
   }
 }
 
@@ -414,3 +324,139 @@ function getBrowserName() {
       return "Browser";
   }
 }
+
+/**
+ * Crée un context (clic droit de la souris) pour les liens
+ * Documentation : https://developer.chrome.com/apps/contextMenus
+ *
+ * @param {Object} options:
+ *   @param  {String} options.id:       "copy-link-to-clipboard"                      Unique ID utilisé pour identifier ce menu
+ *   @param  {String} options.title:    chrome.i18n.getMessage("menuContextSendLink") Ce qui va apparaitre dans le menu (voir `./_locales/[lang]/`)
+ *   @param  {Array} options.contexts: ["link"]                                       À quel contexte le menu doit apparaitre (ici pour les liens)
+ * @param  {Function} callback:                                                       Un callback pour avertir des erreurs
+ */
+chrome.runtime.onInstalled.addListener(async () => {
+  chrome.contextMenus.remove("copy-link-to-clipboard", () => {
+    chrome.contextMenus.create({
+      id: "copy-link-to-clipboard",
+      title: chrome.i18n.getMessage("menuContextSendLink"),
+      contexts: ["link"],
+    }, () => {
+      if (chrome.runtime.lastError) {
+        console.log("Error:",chrome.runtime.lastError);
+      } else {
+        // on reset le badge de l'extension
+        chrome.action.setBadgeText({text:""});
+        // on vérifie si l'addon est configuré
+        getSettings()
+        .then(settings => {
+          if (!settings || !settings.appToken) {
+            chrome.action.setBadgeBackgroundColor({color:"#D32F2F"}); // red darken-1
+            chrome.action.setBadgeText({text:"❕"});
+          } else {
+            _settings = settings;
+          }
+        });
+      }
+    });
+  })
+})
+
+
+/**
+ * L'action qui découle du clic sur le menu
+ */
+chrome.contextMenus.onClicked.addListener(info => {
+  if (info.menuItemId === "copy-link-to-clipboard") {
+    const safeUrl = escapeHTML(info.linkUrl);
+    sendURL(safeUrl);
+  }
+});
+
+// quand le storage de l'extension change, on veut appliquer les changements à nos variables locales
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+    if (namespace === 'local' && key === 'settings') _settings = newValue;
+  }
+});
+
+// permet de communiquer avec popup.html et options.html
+// on doit transmettre des messages sous forme de texte (donc utiliser JSON.stringify)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // retourne la liste des downloads
+  if (message.action === "getListDownloads") {
+    getListDownloads()
+    .then(res => sendResponse({ downloads: res }))
+    .catch(err => sendResponse({ error: getErrorMessage(err) }));
+  }
+  // enregistre les settings
+  else if (message.action === "setSettings") {
+    setSettings(JSON.parse(message.data))
+    .then(() => sendResponse())
+    .catch(err => sendResponse({ error: getErrorMessage(err) }));
+  }
+  // retourne les settings
+  else if (message.action === "getSettings") {
+    getSettings()
+    .then(settings => sendResponse(settings))
+    .catch(err => sendResponse({ error: getErrorMessage(err) }));
+  }
+  else if (message.action === "requestAuthorization") {
+    requestAuthorization(message.data)
+    .then(result => {
+      sendResponse(result)
+    })
+    .catch(err => {
+      console.log(err);
+      if (typeof err === "object") {
+        if (err.msg) err=err.msg;
+        else if (typeof err.toString === "function") err=err.toString();
+        else err=JSON.stringify(err);
+      }
+      if (err === "TypeError: Failed to fetch") {
+        err = `La connexion avec le domaine "${_settings.domain}" a rencontré un problème. Vérifiez que l'URL indiquée est correcte et accessible.`;
+      }
+      sendResponse({ error: getErrorMessage(err) })
+    });
+  }
+  // modifie le statut d'un tâche
+  else if (message.action === "updateTaskStatus") {
+    let { taskId, status } = JSON.parse(message.data);
+    updateTaskStatus(taskId, status)
+    .then(result => {
+      sendResponse(result)
+    })
+    .catch(err => {
+      console.log(err);
+      if (typeof err === "object") {
+        if (err.msg) err=err.msg;
+        else if (typeof err.toString === "function") err=err.toString();
+        else err=JSON.stringify(err);
+      }
+      sendResponse({ error: getErrorMessage(err) })
+    });
+  }
+  else if (message.action === "watchQueue") {
+    if (!_watchQueueInProgress) watchQueue();
+    sendResponse();
+  }
+
+
+  // Indique que la réponse est asynchrone
+  return true;
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "watchQueueAlarm") {
+    watchQueue();
+  }
+});
+
+chrome.runtime.onStartup.addListener(function() {
+  console.log('Browser restarted, background script started.');
+  // Placez ici des appels à chrome.storage.local.get si nécessaire
+});
+
+// lorsqu'on lance le navigateur, on veut qu'il récupère les settings
+getSettings()
+.then(settings => _settings=settings);

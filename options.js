@@ -1,10 +1,13 @@
 // Charger les options enregistrées
+window.settings = {};
 function loadOptions () {
   getSettings()
   .then(settings => {
-    console.log("settings => ", JSON.stringify(settings));
+    window.settings = settings;
     document.getElementById('domain').value = settings.domain || _defaultDomain;
     document.getElementById('appToken').value = settings.appToken || "";
+    document.getElementById('regExp').value = settings.regExp || "";
+    document.getElementById('replaceWith').value = settings.replaceWith || "";
   });
 }
 loadOptions();
@@ -16,11 +19,15 @@ btn.addEventListener('click', () => {
     // on vérifie le regexp
     const regexp = document.getElementById('regExp').value;
     new RegExp(regexp); // si ce n'est pas bon, on arrive dans le "catch"
-    const replacewith = document.getElementById('replaceWith').value;
+    const replaceWith = document.getElementById('replaceWith').value;
     const domain = document.getElementById('domain').value;
     if (!domain) alert("Erreur : l'URL d'accès à la Freebox est obligatoire.");
+    let params = {domain:domain, regExp:regexp, replaceWith:replaceWith};
+    // on vérifie si le token a été modifié
+    let appToken = document.getElementById('appToken').value;
+    if (appToken !== window.settings.appToken) params.appToken = appToken;
     btn.innerText = "Sauvegarde…";
-    setSettings({domain:domain, regExp:regexp, replacewith:replaceWith})
+    setSettings(params)
     .then(() => {
       loadOptions();
       btn.innerText = "✓ Sauvegardé !";
