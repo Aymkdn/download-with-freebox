@@ -33,12 +33,39 @@ var _watchQueueInProgress = false;
 
 
 // permet d'enregistrer les 'settings'
-function setSettings(settings) {
+async function setSettings(settings) {
   for (let key in settings) {
     _settings[key] = settings[key];
     // on enlève les "/" à la fin du domain
     // à cause du self-signed certificat, on force mafreebox.freebox.fr à être en HTTP
-    if (key === "domain") _settings[key]=_settings[key].replace(/\/+$/, "").replace("https://mafreebox.freebox.fr", "http://mafreebox.freebox.fr");
+    if (key === "domain") {
+      _settings[key]=_settings[key].split('/').slice(0,3).join('/').replace("https://mafreebox.freebox.fr", "http://mafreebox.freebox.fr");
+      // on va limiter l'accès à freebox.fr ou freeboxos.fr
+      if (!/https:\/\/.*.freeboxos.fr:\d+|http:\/\/mafreebox.freebox.fr/.test(_settings[key])) {
+        _settings[key] = _defaultDomain;
+      }
+      // si l'adresse est différente de mafreebox.freebox.fr alors on demande une autorisation spéciale
+      // await new Promise(res => {
+      //   // on regarde si le domaine n'a pas déjà été autorisé
+      //   let requestedDomain = _settings[key]+'/*';
+      //   chrome.permissions.contains({
+      //     origins: [requestedDomain]
+      //   }, (result) => {
+      //     if (result) {
+      //       res();
+      //     } else {
+      //       chrome.permissions.request({
+      //         origins: [requestedDomain]
+      //       }, (granted) => {
+      //         if (!granted) {
+      //           _settings[key] = _defaultDomain;
+      //         }
+      //         res();
+      //       });
+      //     }
+      //   });        
+      // });
+    }
   }
   // on enregistre durablement
   return new Promise(res => {
