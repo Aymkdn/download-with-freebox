@@ -27,8 +27,6 @@
   "permissions": [
     "contextMenus",
     "storage",
-    "activeTab",
-    "scripting",
     "alarms"
   ],
   "host_permissions": [
