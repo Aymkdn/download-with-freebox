@@ -8,6 +8,11 @@ Cette extension permet les fonctions suivantes :
   - Lister les téléchargements en cours
   - Gestion simple des téléchargements
   
+Elle est disponible sur les différents stores :
+  - [Chrome](https://chromewebstore.google.com/detail/download-via-freebox/djcfifcdpfhpmcpacfopjhpklagkhdmj)
+  - [Firefox](https://addons.mozilla.org/fr/firefox/addon/download-via-freebox/)
+  - Edge
+  
 ## Différences avec `SendToFreebox`
 
 Le code a été mis à jour, et le développeur d'origine n'ayant plus de Freebox, plus d'évolution n'était possible pour cette extension.
