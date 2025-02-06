@@ -58,6 +58,9 @@ document.addEventListener('DOMContentLoaded', run);
 
 // on demande à background.js de faire une demande d'autorisation
 function requestAuthorization(domain) {
+  // hide error
+  let errorEl = document.querySelector('#error');
+  if (errorEl) errorEl.style.display='none';
   chrome.runtime.sendMessage({ action: "requestAuthorization", data:domain })
   .then(async result => {
     if (result.error) handleError(result.error, 'requestAuthorization');
