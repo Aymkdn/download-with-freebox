@@ -11,7 +11,7 @@ Cette extension permet les fonctions suivantes :
 Elle est disponible sur les différents stores :
   - [Chrome](https://chromewebstore.google.com/detail/download-via-freebox/djcfifcdpfhpmcpacfopjhpklagkhdmj)
   - [Firefox](https://addons.mozilla.org/fr/firefox/addon/download-via-freebox/)
-  - Edge
+  - [Edge](https://microsoftedge.microsoft.com/addons/detail/idnoklafjghdpkemejcjhchmkkphbkea)
   
 ## Différences avec `SendToFreebox`
 
