@@ -238,3 +238,35 @@ async function updateTaskStatus(taskId, status) {
   }
 }
 
+function serializeFormData(formData) {
+  const formDataEntries = [];
+  formData.forEach((value, key) => {
+    // Si la valeur est un fichier, on la transforme en base64 pour l'envoyer comme chaîne
+    if (value instanceof File) {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        formDataEntries.push({ key, value: event.target.result }); // base64 du fichier
+      };
+      reader.readAsDataURL(value); // Convertit le fichier en base64
+    } else {
+      formDataEntries.push({ key, value });
+    }
+  });
+  return formDataEntries; // retourne les entrées sous forme d'un tableau d'objets
+}
+
+// lorsqu'on sélectionne un fichier local
+document.getElementById('file_download').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      // Envoyer les données sérialisées au background script
+      chrome.runtime.sendMessage({
+        action: 'sendFormData',
+        data: JSON.stringify({filename:file.name, content:event.target.result})
+      });
+    };
+    reader.readAsDataURL(file); // Convertit le fichier en base64  
+  }
+});

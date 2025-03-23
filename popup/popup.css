@@ -129,3 +129,16 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* file picker */
+.file-input-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  cursor: pointer;
+  height: 24px;
+}
+
+.file-input-wrapper input[type="file"] {
+  display: none;
+}

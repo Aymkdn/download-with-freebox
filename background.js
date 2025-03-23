@@ -265,11 +265,9 @@ function handleError(err) {
 }
 
 /**
- * Cette fonction est appelée lorsque l'utilisateur envoie un lien vers l'extension
- *
- * @param {String} uri: L'URL à envoyer à la Freebox
+ * Cette fonction est appelée lorsque l'utilisateur un téléchargement vers la Freebox
  */
-async function sendURL(uri) {
+async function sendBody(body) {
   // on montre un badge pour indiquer que la demande est bien prise en compte
   chrome.action.setBadgeBackgroundColor({color:"#FFF"}); // blanc
   chrome.action.setBadgeText({text:"⏳"}); // 🔄
@@ -278,22 +276,16 @@ async function sendURL(uri) {
   let res = await openSession();
   if (!res) return;
 
-  // on regarde si un regexp doit être appliqué
-  if (_settings.regExp) {
-    uri = uri.replace(new RegExp(_settings.regExp), _settings.replaceWith);
-  }
-  uri = encodeURIComponent(uri);
-
   let baseUrl = await getBaseUrl();
   // on envoie le lien dans la queue
   let response = await fetch(baseUrl+"/downloads/add", {
     credentials:'omit',
     headers:{
       "X-Fbx-App-Auth": _sessionToken,
-      "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+      //"Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
     },
     method:"POST",
-    body: "download_url=" + uri /*+ "&download_dir=" TODO: gérer le répertoire */
+    body: body
   });
   let data = await response.json();
 
@@ -335,6 +327,8 @@ async function watchQueue() {
     _watchQueueInProgress = false;
     // on arrête l'alarme
     chrome.alarms.clear("watchQueueAlarm");
+    // on supprime le badge
+    chrome.action.setBadgeText({text:""});
   }
 }
 
@@ -396,7 +390,12 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.contextMenus.onClicked.addListener(info => {
   if (info.menuItemId === "copy-link-to-clipboard") {
     const safeUrl = escapeHTML(info.linkUrl);
-    sendURL(safeUrl);
+    // on regarde si un regexp doit être appliqué
+    if (_settings.regExp) {
+      safeUrl = safeUrl.replace(new RegExp(_settings.regExp), _settings.replaceWith);
+    }
+    safeUrl = encodeURIComponent(safeUrl);
+    sendBody("download_url=" + safeUrl);
   }
 });
 
@@ -406,6 +405,23 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && key === 'settings') _settings = newValue;
   }
 });
+
+// transforme un fichier base64 en un Blob
+function base64ToBlob(base64, mimeType) {
+  let byteCharacters = atob(base64);
+  let byteArrays = [];
+
+  for (let i = 0; i < byteCharacters.length; i += 512) {
+    let slice = byteCharacters.slice(i, i + 512);
+    let byteNumbers = new Array(slice.length);
+    for (let j = 0; j < slice.length; j++) {
+      byteNumbers[j] = slice.charCodeAt(j);
+    }
+    byteArrays.push(new Uint8Array(byteNumbers));
+  }
+
+  return new Blob(byteArrays, { type: mimeType });
+}
 
 // permet de communiquer avec popup.html et options.html
 // on doit transmettre des messages sous forme de texte (donc utiliser JSON.stringify)
@@ -467,7 +483,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!_watchQueueInProgress) watchQueue();
     sendResponse();
   }
+  else if (message.action === "sendFormData") {
+    let { filename, content } = JSON.parse(message.data);
+    let matches = content.match(/^data:(.+);base64,(.+)$/);
+    let mimeType = matches[1];
+    let base64Data = matches[2];
 
+    let blob = base64ToBlob(base64Data, mimeType);
+    let formData = new FormData();
+    formData.append("download_file", blob, filename);
+    sendBody(formData);
+    sendResponse();
+  }
 
   // Indique que la réponse est asynchrone
   return true;
