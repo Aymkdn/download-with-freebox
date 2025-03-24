@@ -277,13 +277,17 @@ async function sendBody(body) {
   if (!res) return;
 
   let baseUrl = await getBaseUrl();
+  let headers = {
+    "X-Fbx-App-Auth": _sessionToken
+  }
+  // on spécifie le content type quand c'est nécessaire
+  if (typeof body === "string" && body.startsWith('download_url')) {
+    headers["Content-Type"] = "application/x-www-form-urlencoded; charset=utf-8";
+  }
   // on envoie le lien dans la queue
   let response = await fetch(baseUrl+"/downloads/add", {
     credentials:'omit',
-    headers:{
-      "X-Fbx-App-Auth": _sessionToken,
-      //"Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
-    },
+    headers:headers,
     method:"POST",
     body: body
   });
@@ -389,7 +393,7 @@ chrome.runtime.onInstalled.addListener(async () => {
  */
 chrome.contextMenus.onClicked.addListener(info => {
   if (info.menuItemId === "copy-link-to-clipboard") {
-    const safeUrl = escapeHTML(info.linkUrl);
+    let safeUrl = escapeHTML(info.linkUrl);
     // on regarde si un regexp doit être appliqué
     if (_settings.regExp) {
       safeUrl = safeUrl.replace(new RegExp(_settings.regExp), _settings.replaceWith);
@@ -426,11 +430,21 @@ function base64ToBlob(base64, mimeType) {
 // permet de communiquer avec popup.html et options.html
 // on doit transmettre des messages sous forme de texte (donc utiliser JSON.stringify)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("message => ", message);
   // retourne la liste des downloads
   if (message.action === "getListDownloads") {
     getListDownloads()
     .then(res => sendResponse({ downloads: res }))
     .catch(err => sendResponse({ error: getErrorMessage(err) }));
+  }
+  else if (message.action === "openPopup") {
+    chrome.windows.create({
+      url: "popup/popup.html",
+      type: "popup",
+      width: 600,
+      height: 300
+    })
+    .then(() => sendResponse());
   }
   // enregistre les settings
   else if (message.action === "setSettings") {

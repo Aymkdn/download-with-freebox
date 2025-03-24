@@ -256,17 +256,11 @@ function serializeFormData(formData) {
 }
 
 // lorsqu'on sélectionne un fichier local
-document.getElementById('file_download').addEventListener('change', async (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      // Envoyer les données sérialisées au background script
-      chrome.runtime.sendMessage({
-        action: 'sendFormData',
-        data: JSON.stringify({filename:file.name, content:event.target.result})
-      });
-    };
-    reader.readAsDataURL(file); // Convertit le fichier en base64  
-  }
+document.getElementById("file_trigger").addEventListener("click", () => {
+  chrome.windows.create({
+    url: "file_download.html",
+    type: "popup",
+    width: 400,
+    height: 300
+  })
 });

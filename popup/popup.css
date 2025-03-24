@@ -130,15 +130,8 @@ h1 {
   text-overflow: ellipsis;
 }
 
-/* file picker */
-.file-input-wrapper {
-  position: relative;
-  display: inline-block;
-  overflow: hidden;
+#file_trigger {
+  background-color: transparent;
+  border-width: 0;
   cursor: pointer;
-  height: 24px;
-}
-
-.file-input-wrapper input[type="file"] {
-  display: none;
 }
