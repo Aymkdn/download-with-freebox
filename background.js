@@ -93,7 +93,7 @@ async function getBaseUrl() {
   return Promise.resolve(_baseUrl);
 }
 
-/// Va permettre de récupérer le token de session
+// Va permettre de récupérer le token de session
 async function openSession() {
   // on récupère le challenge
   let baseUrl = await getBaseUrl();
@@ -199,7 +199,7 @@ async function updateTaskStatus(taskId, status) {
     }
   };
   // si on veut finir
-  if (status === 'end') {
+  if (['end', 'end-erase'].includes(status)) {
     params.method="DELETE";
   } else {
     params.method="PUT";
@@ -209,7 +209,7 @@ async function updateTaskStatus(taskId, status) {
   }
 
   let baseUrl = await getBaseUrl();
-  let response = await fetch(baseUrl+"/downloads/"+taskId, params);
+  let response = await fetch(baseUrl+"/downloads/"+taskId + (status === 'end-erase' ? '/erase' : ''), params);
   let data = await response.json();
   // erreur ?
   if (!data.success) {

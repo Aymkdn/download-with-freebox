@@ -4,9 +4,10 @@
 
 Cette extension permet les fonctions suivantes :
 
-  - Clic droit sur une URL pour envoyer vers l'appli _Téléchargement_ du Freebox Serveur
-  - Lister les téléchargements en cours
-  - Gestion simple des téléchargements
+  - Clic droit sur une URL pour envoyer vers l'appli _Téléchargement_ du Freebox Serveur  
+  - Lancement d'un téléchargement depuis la sélection d'un fichier `.torrent` local  
+  - Lister les téléchargements en cours   
+  - Gestion simple des téléchargements  
   
 Elle est disponible sur les différents stores :
   - [Chrome](https://chromewebstore.google.com/detail/download-via-freebox/djcfifcdpfhpmcpacfopjhpklagkhdmj)
