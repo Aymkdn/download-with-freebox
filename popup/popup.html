@@ -38,9 +38,14 @@
   <div id="configured" style="display:none">
     <h1 style="display:flex;align-items:center;justify-content:space-between;">
       <span>Liste des Téléchargements</span>
-      <button type="button" id="file_trigger" title="Cliquez ici pour sélectionner un fichier local à envoyer à la Freebox">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M640-520v-200h80v200h-80ZM440-244q-35-10-57.5-39T360-350v-370h80v476Zm30 164q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v300h-80v-300q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q25 0 47.5-6.5T560-186v89q-21 8-43.5 12.5T470-80Zm170-40v-120H520v-80h120v-120h80v120h120v80H720v120h-80Z"/></svg>
-      </label>
+      <div>
+        <button type="button" id="paste_trigger" title="Cliquez ici pour coller des liens à envoyer à la Freebox">
+          <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="24" height="24" stroke="none" fill="#000000" opacity="0" /><g transform="matrix(0.77 0 0 0.77 12 12)"><path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;" transform=" translate(-13, -13)" d="M 10.5 0 C 9.898438 0 9.292969 0.398438 9.09375 1 L 8 1 C 6.898438 1 6 1.898438 6 3 L 4 3 C 2.300781 3 1 4.300781 1 6 L 1 21 C 1 22.699219 2.300781 24 4 24 L 8.90625 24 C 8.605469 23.398438 8.5 22.699219 8.5 22 L 8.5 21 L 4 21 L 4 6 L 6.3125 6 C 6.613281 6.601563 7.300781 7 8 7 L 13 7 C 13.699219 7 14.386719 6.601563 14.6875 6 L 17 6 L 17 7.5 L 20 7.5 L 20 6 C 20 4.300781 18.699219 3 17 3 L 15 3 C 15 1.898438 14.101563 1 13 1 L 11.90625 1 C 11.707031 0.398438 11.101563 0 10.5 0 Z M 8 3 L 13 3 L 13 5 L 8 5 Z M 14 9 C 11.800781 9 10 10.800781 10 13 L 10 22 C 10 24.199219 11.800781 26 14 26 L 21 26 C 23.199219 26 25 24.199219 25 22 L 25 13 C 25 10.800781 23.199219 9 21 9 Z M 14 11 L 21 11 C 22.101563 11 23 11.898438 23 13 L 23 22 C 23 23.101563 22.101563 24 21 24 L 14 24 C 12.898438 24 12 23.101563 12 22 L 12 13 C 12 11.898438 12.898438 11 14 11 Z M 14 15 L 14 17 L 21 17 L 21 15 Z M 14 19 L 14 21 L 21 21 L 21 19 Z" stroke-linecap="round" /></g></svg>
+        </button>
+        <button type="button" id="file_trigger" title="Cliquez ici pour sélectionner un fichier local à envoyer à la Freebox">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M640-520v-200h80v200h-80ZM440-244q-35-10-57.5-39T360-350v-370h80v476Zm30 164q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v300h-80v-300q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q25 0 47.5-6.5T560-186v89q-21 8-43.5 12.5T470-80Zm170-40v-120H520v-80h120v-120h80v120h120v80H720v120h-80Z"/></svg>
+        </button>
+      </div>
     </h1>
     <p id="none">Aucun téléchargement en cours.</p>
     <table id="downloads">

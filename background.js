@@ -432,82 +432,106 @@ function base64ToBlob(base64, mimeType) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("message => ", message);
   // retourne la liste des downloads
-  if (message.action === "getListDownloads") {
-    getListDownloads()
-    .then(res => sendResponse({ downloads: res }))
-    .catch(err => sendResponse({ error: getErrorMessage(err) }));
-  }
-  else if (message.action === "openPopup") {
-    chrome.windows.create({
-      url: "popup/popup.html",
-      type: "popup",
-      width: 600,
-      height: 300
-    })
-    .then(() => sendResponse());
-  }
-  // enregistre les settings
-  else if (message.action === "setSettings") {
-    setSettings(JSON.parse(message.data))
-    .then(() => sendResponse())
-    .catch(err => sendResponse({ error: getErrorMessage(err) }));
-  }
-  // retourne les settings
-  else if (message.action === "getSettings") {
-    getSettings()
-    .then(settings => sendResponse(settings))
-    .catch(err => sendResponse({ error: getErrorMessage(err) }));
-  }
-  else if (message.action === "requestAuthorization") {
-    requestAuthorization(message.data)
-    .then(result => {
-      sendResponse(result)
-    })
-    .catch(err => {
-      console.log(err);
-      if (typeof err === "object") {
-        if (err.msg) err=err.msg;
-        else if (typeof err.toString === "function") err=err.toString();
-        else err=JSON.stringify(err);
-      }
-      if (err === "TypeError: Failed to fetch") {
-        err = `La connexion avec le domaine "${_settings.domain}" a rencontré un problème. Vérifiez que l'URL indiquée est correcte et accessible.`;
-      }
-      sendResponse({ error: getErrorMessage(err) })
-    });
-  }
-  // modifie le statut d'un tâche
-  else if (message.action === "updateTaskStatus") {
-    let { taskId, status } = JSON.parse(message.data);
-    updateTaskStatus(taskId, status)
-    .then(result => {
-      sendResponse(result)
-    })
-    .catch(err => {
-      console.log(err);
-      if (typeof err === "object") {
-        if (err.msg) err=err.msg;
-        else if (typeof err.toString === "function") err=err.toString();
-        else err=JSON.stringify(err);
-      }
-      sendResponse({ error: getErrorMessage(err) })
-    });
-  }
-  else if (message.action === "watchQueue") {
-    if (!_watchQueueInProgress) watchQueue();
-    sendResponse();
-  }
-  else if (message.action === "sendFormData") {
-    let { filename, content } = JSON.parse(message.data);
-    let matches = content.match(/^data:(.+);base64,(.+)$/);
-    let mimeType = matches[1];
-    let base64Data = matches[2];
+  switch(message.action) {
+    case "getListDownloads": {
+      getListDownloads()
+      .then(res => sendResponse({ downloads: res }))
+      .catch(err => sendResponse({ error: getErrorMessage(err) }));
+      break;
+    }
+    case "openPopup": {
+      chrome.windows.create({
+        url: "popup/popup.html",
+        type: "popup",
+        width: 600,
+        height: 300
+      })
+      .then(() => sendResponse());
+      break;
+    }
+    // enregistre les settings
+    case "setSettings": {
+      setSettings(JSON.parse(message.data))
+      .then(() => sendResponse())
+      .catch(err => sendResponse({ error: getErrorMessage(err) }));
+      break;
+    }
+    // retourne les settings
+    case "getSettings": {
+      getSettings()
+      .then(settings => sendResponse(settings))
+      .catch(err => sendResponse({ error: getErrorMessage(err) }));
+      break;
+    }
+    case "requestAuthorization": {
+      requestAuthorization(message.data)
+      .then(result => {
+        sendResponse(result)
+      })
+      .catch(err => {
+        console.log(err);
+        if (typeof err === "object") {
+          if (err.msg) err=err.msg;
+          else if (typeof err.toString === "function") err=err.toString();
+          else err=JSON.stringify(err);
+        }
+        if (err === "TypeError: Failed to fetch") {
+          err = `La connexion avec le domaine "${_settings.domain}" a rencontré un problème. Vérifiez que l'URL indiquée est correcte et accessible.`;
+        }
+        sendResponse({ error: getErrorMessage(err) })
+      });
+      break;
+    }
+    // modifie le statut d'un tâche
+    case "updateTaskStatus": {
+      let { taskId, status } = JSON.parse(message.data);
+      updateTaskStatus(taskId, status)
+      .then(result => {
+        sendResponse(result)
+      })
+      .catch(err => {
+        console.log(err);
+        if (typeof err === "object") {
+          if (err.msg) err=err.msg;
+          else if (typeof err.toString === "function") err=err.toString();
+          else err=JSON.stringify(err);
+        }
+        sendResponse({ error: getErrorMessage(err) })
+      });
+      break;
+    }
+    case "watchQueue": {
+      if (!_watchQueueInProgress) watchQueue();
+      sendResponse();
+      break;
+    }
+    case "sendFormData": {
+      let { filename, content } = JSON.parse(message.data);
+      let matches = content.match(/^data:(.+);base64,(.+)$/);
+      let mimeType = matches[1];
+      let base64Data = matches[2];
 
-    let blob = base64ToBlob(base64Data, mimeType);
-    let formData = new FormData();
-    formData.append("download_file", blob, filename);
-    sendBody(formData);
-    sendResponse();
+      let blob = base64ToBlob(base64Data, mimeType);
+      let formData = new FormData();
+      formData.append("download_file", blob, filename);
+      sendBody(formData);
+      sendResponse();
+      break;
+    }
+    case "sendLinks": {
+      let urls = message.data.split(';');
+      for (let url of urls) {
+        let safeUrl = escapeHTML(url);
+        // on regarde si un regexp doit être appliqué
+        if (_settings && _settings.regExp) {
+          safeUrl = safeUrl.replace(new RegExp(_settings.regExp), _settings.replaceWith);
+        }
+        safeUrl = encodeURIComponent(safeUrl);
+        sendBody("download_url=" + safeUrl);
+      }
+      sendResponse();
+      break;
+    }
   }
 
   // Indique que la réponse est asynchrone

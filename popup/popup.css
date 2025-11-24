@@ -130,7 +130,13 @@ h1 {
   text-overflow: ellipsis;
 }
 
+#paste_trigger {
+  padding-right:0;
+}
 #file_trigger {
+  padding-left:0;
+}
+#paste_trigger, #file_trigger {
   background-color: transparent;
   border-width: 0;
   cursor: pointer;
