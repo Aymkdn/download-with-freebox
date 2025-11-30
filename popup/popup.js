@@ -179,6 +179,12 @@ async function showDownloads() {
           case "seeding": status="✓ Terminé"; break;
           case "retry": status="Nouvel Essai"; break;
         }
+
+        // on affiche un message spécial quand c'est du YGG
+        if (res.status === 'error' && filename.includes("download_torrent")) {
+          status = `${status} (<a href="https://github.com/Aymkdn/download-with-freebox/issues/1" target="_blank">en savoir plus</a>)`;
+        }
+
         html.push(`<tr>
           <td class="torrent-name" title="${res.name}" style="border-bottom-width:0;">${filename}</td>
           <td style="border-bottom-width:0;white-space:nowrap">${status==='Téléchargement'?'<div class="donut"><div class="donut-spinner" style="border-width:2px"></div><span>Téléchargement</span></div>':status}</td>
