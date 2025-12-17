@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Download via Freebox",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Envoi un lien vers la Freebox pour être téléchargé",
   "browser_specific_settings": {
     "gecko": {
@@ -33,7 +33,8 @@
   "host_permissions": [
     "http://mafreebox.freebox.fr/*",
     "https://*.freeboxos.fr/",
-    "https://www.yggtorrent.top/"
+    "https://www.yggtorrent.top/",
+    "https://www.yggtorrent.org/"
   ],
   "options_ui": {
     "page": "options.html",
