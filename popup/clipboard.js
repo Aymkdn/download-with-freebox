@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // récupérer le contenu mis en cache par popup.js (s'il existe)
   chrome.storage.local.get('clipboardCache', (res) => {
     if (res && typeof res.clipboardCache === 'string') {
-      console.log("=>", res.clipboardCache);
       out.value = res.clipboardCache;
       // optionnel : supprimer le cache si vous ne voulez pas le garder
       chrome.storage.local.remove('clipboardCache');

@@ -180,9 +180,9 @@ async function showDownloads() {
           case "retry": status="Nouvel Essai"; break;
         }
 
-        // on affiche un message spécial quand c'est du YGG
-        if (res.status === 'error' && filename.includes("download_torrent")) {
-          status = `${status} (<a href="https://github.com/Aymkdn/download-with-freebox/wiki/T%C3%A9l%C3%A9charger-depuis-YGG-Torrent" target="_blank">en savoir plus</a>)`;
+        // on affiche un message spécial quand y'a une erreur
+        if (res.status === 'error') {
+          status = `<div style="display:flex;align-items:center;justify-content:center;gap:5px">${status} <button type="button" class="btn-corriger" data-id="${res.id}" title="Cliquer ici pour voir des options de résolution">Corriger</button></div>`;
         }
 
         html.push(`<tr>
@@ -193,7 +193,7 @@ async function showDownloads() {
         <tr>
           <td colspan="3" style="text-align:right;white-space:nowrap;">
             ${res.status === 'stopped' || status === 'Erreur' ? '<button data-id="' + res.id + '" type="button" class="btn-play"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="blue"><path d="m384-312 264-168-264-168v336Zm96.28 216Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"/></svg> <span>Reprendre</span></button>' : ''}
-            ${res.status === 'done' ? '' : '<button data-id="' + res.id +'" type="button" class="btn-stop"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="blue"><path d="M360-336h72v-288h-72v288Zm168 0h72v-288h-72v288ZM480.28-96Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"/></svg> <span>Pause</span></button>'}
+            ${status === '✓ Terminé' ? '' : '<button data-id="' + res.id +'" type="button" class="btn-stop"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="blue"><path d="M360-336h72v-288h-72v288Zm168 0h72v-288h-72v288ZM480.28-96Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"/></svg> <span>Pause</span></button>'}
             <button data-id="${res.id}" type="button" class="btn-end-erase"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="red"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z"/></svg> <span>Supprimer Tâche & Fichiers</span></button>
             <button data-id="${res.id}" type="button" class="btn-end"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="green"><path d="M384-357 192-549l51-51 141 141 333-333 51 51-384 384ZM240-192v-72h480v72H240Z"/></svg><span>Supprimer Tâche</span></button>
           </td>
@@ -201,11 +201,17 @@ async function showDownloads() {
       });
       document.querySelector('#downloads tbody').innerHTML = html.join('\n');
 
+      // bouton pour corriger
+      let btnCorriger = document.querySelectorAll('.btn-corriger');
+      for (let i=0; i<btnCorriger.length; i++) {
+        btnCorriger[i].addEventListener("click", async event => {
+          openCorrectPopup(event.currentTarget.dataset.id);
+        });
+      }
       // les boutons pour reprendre
       let btnPlay = document.querySelectorAll('.btn-play');
       for (let i=0; i<btnPlay.length; i++) {
         btnPlay[i].addEventListener("click", async event => {
-          console.log("Reprendre", event.currentTarget.dataset.id);
           updateTaskStatus(event.currentTarget.dataset.id, "downloading");
         });
       }
@@ -242,7 +248,7 @@ async function updateTaskStatus(taskId, status) {
 
   try {
     // on demande à background.js de le faire
-    let data = await new Promise((promiseOK, promiseKO) => {
+    await new Promise((promiseOK, promiseKO) => {
       chrome.runtime.sendMessage({ action: "updateTaskStatus", data:JSON.stringify({taskId, status}) }, (response) => {
         if (response.error) promiseKO(response.error);
         else promiseOK(response);
@@ -326,3 +332,14 @@ document.getElementById("paste_trigger").addEventListener("click", async () => {
     });
   }
 });
+
+function openCorrectPopup (id) {
+  chrome.storage.local.set({ failingId: id }, () => {
+    chrome.windows.create({
+      url: chrome.runtime.getURL("popup/askhost.html"),
+      type: "popup",
+      width: 450,
+      height: 275
+    });
+  });
+}

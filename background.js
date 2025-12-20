@@ -294,6 +294,13 @@ async function sendBody(body) {
   });
   let data = await response.json();
 
+  // on sauvegarde le lien avec son id
+  let { idToLink } = await chrome.storage.local.get('idToLink');
+  idToLink = idToLink || {};
+  idToLink[data.result.id] = decodeURIComponent(body.replace("download_url=",""));
+  console.log("idToLink:", JSON.stringify(idToLink));
+  await chrome.storage.local.set({ idToLink: idToLink });
+
   // erreur ?
   if (!data.success) {
     handleError(data.msg);
@@ -440,7 +447,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function receiveMessage(message, sender, sendResponse) {
-  console.log("message => ", message);
+  console.log("message => ", JSON.stringify(message));
   // retourne la liste des downloads
   switch (message.action) {
     case "getListDownloads": {
@@ -529,45 +536,54 @@ function receiveMessage(message, sender, sendResponse) {
       break;
     }
     case "sendLinks": {
-      let urls = message.data.split(';');
-      for (let url of urls) {
-        // si le nom de domaine de l'URL contient "yggtorrent", alors on va d'abord télécharger le fichier avec 'fetch'
-        // exemple de lien: https://www.yggtorrent.top/engine/download_torrent?id=331549
-        if (url.includes("yggtorrent")) {
-          fetch(url)
-          .then(response => {
-            // Récupérer le nom depuis le header Content-Disposition
-            const contentDisposition = response.headers.get('Content-Disposition');
-            // pour le nom du fichier, on va utiliser l'ID du torrent dans l'URL si on ne trouve pas le header
-            const urlObj = new URL(url);
-            const id = urlObj.searchParams.get('id');
-            let filename = id ? `ygg_torrent_${id}` : "ygg_torrent_" + Date.now();
+      chrome.permissions.getAll((result) => {
+        let urls = message.data.split(';');
+        for (let url of urls) {
+          // 'result.origins' is an array of strings
+          // Example: ["https://myserver.com/*", "https://api.google.com/*"]
+          const authorizedDomains = result.origins || [];
 
-            if (contentDisposition) {
-              const match = contentDisposition.match(/filename="?(.+)"?/i);
-              if (match) {
-                filename = match[1];
-              }
-            }
-
-            return response.blob().then(blob => ({ blob, filename }));
-          })
-          .then(({ blob, filename }) => {
-            let formData = new FormData();
-            formData.append("download_file", blob, filename);
-            sendBody(formData);
+          // si le nom de domaine de l'URL contient un des domaines autorisés, alors on va d'abord télécharger le fichier avec 'fetch'
+          // exemple de lien: https://www.yggtorrent.top/engine/download_torrent?id=331549
+          let domainAuthorized = authorizedDomains.some(domainPattern => {
+            let regExp = new RegExp(domainPattern.replaceAll('*', '.*'), "i");
+            return url.match(regExp);
           });
-        } else {
-          let safeUrl = escapeHTML(url);
-          // on regarde si un regexp doit être appliqué
-          if (_settings && _settings.regExp) {
-            safeUrl = safeUrl.replace(new RegExp(_settings.regExp), _settings.replaceWith);
+          if (domainAuthorized) {
+            fetch(url)
+            .then(response => {
+              // Récupérer le nom depuis le header Content-Disposition
+              const contentDisposition = response.headers.get('Content-Disposition');
+              // pour le nom du fichier, on va utiliser l'ID du torrent dans l'URL si on ne trouve pas le header
+              const urlObj = new URL(url);
+              const id = urlObj.searchParams.get('id');
+              let filename = id ? `ygg_torrent_${id}` : "ygg_torrent_" + Date.now();
+
+              if (contentDisposition) {
+                const match = contentDisposition.match(/filename="?(.+)"?/i);
+                if (match) {
+                  filename = match[1];
+                }
+              }
+
+              return response.blob().then(blob => ({ blob, filename }));
+            })
+            .then(({ blob, filename }) => {
+              let formData = new FormData();
+              formData.append("download_file", blob, filename);
+              sendBody(formData);
+            });
+          } else {
+            let safeUrl = escapeHTML(url);
+            // on regarde si un regexp doit être appliqué
+            if (_settings && _settings.regExp) {
+              safeUrl = safeUrl.replace(new RegExp(_settings.regExp), _settings.replaceWith);
+            }
+            safeUrl = encodeURIComponent(safeUrl);
+            sendBody("download_url=" + safeUrl);
           }
-          safeUrl = encodeURIComponent(safeUrl);
-          console.log("safeUrl => ", safeUrl);
-          sendBody("download_url=" + safeUrl);
         }
-      }
+      });
       sendResponse();
       break;
     }

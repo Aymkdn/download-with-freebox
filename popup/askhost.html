@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Problème lors du téléchargement</title>
+  <meta charset="utf-8">
+</head>
+<body
+  style="display:flex;height:100vh;margin:0;padding:0;align-items:flex-start;justify-content:center;flex-direction:column;gap:10px;padding:5px 10px;font-family:Arial;font-size:15px">
+  <div>Le problème lors du téléchargement peut être dû <b>à l'utilisation d'un tracker privé du type "YGGTorrent"</b>. Ces trackers ne fournissent pas un lien direct vers les fichiers Torrent mais redirigent vers une page de téléchargement qui, après authentification, fournit un lien vers le fichier.</div>
+  <div>S'il s'agit de ce cas-là, vous devez autoriser le nom de domaine du site en utilisant le bouton ci-dessous.</div>
+  <input type="text" id="failling_domain" disabled style="width:90%;height:25px;"></input>
+  <input type="hidden" id="failling_id"></input>
+  <input type="hidden" id="failling_link"></input>
+  <button id="add_domain" type="button">Autoriser le domaine</button>
+  <script src="askhost.js"></script>
+</body>
+
+</html>

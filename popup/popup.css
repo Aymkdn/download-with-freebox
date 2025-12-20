@@ -142,9 +142,15 @@ h1 {
   cursor: pointer;
 }
 
-.btn-play,.btn-stop,.btn-end,.btn-end-erase {
+.btn-play,.btn-stop,.btn-end,.btn-end-erase,.btn-corriger {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   vertical-align: bottom;
+}
+
+.btn-corriger {
+  border-width: 1px;
+  padding-block: 2px;
+  border-radius: 3px;
 }
