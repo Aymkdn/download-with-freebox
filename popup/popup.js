@@ -172,7 +172,15 @@ async function showDownloads() {
           case "downloading": status="Téléchargement"; break;
           case "stopping": status="Arrêt en cours"; break;
           case "error": status="Erreur"; break;
-          case "done": status="✓ Terminé"; break;
+          case "done": {
+            // si rx_bytes et tx_bytes et size sont à 0, c'est qu'il y a eu une erreur
+            if (res.rx_bytes === 0 && res.tx_bytes === 0 && res.size === 0) {
+              status = "Erreur";
+            } else {
+              status="✓ Terminé";
+            }
+            break;
+          }
           case "checking": status="Vérification"; break;
           case "repairing": status="Réparation"; break;
           case "extracting": status="Décompression"; break;
@@ -180,24 +188,38 @@ async function showDownloads() {
           case "retry": status="Nouvel Essai"; break;
         }
 
-        // on affiche un message spécial quand y'a une erreur
-        if (res.status === 'error') {
-          status = `<div style="display:flex;align-items:center;justify-content:center;gap:5px">${status} <button type="button" class="btn-corriger" data-id="${res.id}" title="Cliquer ici pour voir des options de résolution">Corriger</button></div>`;
+        html.push(`<tr><td class="torrent-name" title="${res.name}" style="border-bottom-width:0;">${filename}</td><td style="border-bottom-width:0;white-space:nowrap">`);
+        if (status==='Téléchargement') {
+          html.push('<div class="donut"><div class="donut-spinner" style="border-width:2px"></div><span>Téléchargement</span></div>');
+        } else {
+          // on affiche un message spécial quand y'a une erreur
+          if (status === 'Erreur') {
+            html.push(`<div style="display:flex;align-items:center;justify-content:center;gap:5px">${status} <button type="button" class="btn-corriger" data-id="${res.id}" title="Cliquer ici pour voir des options de résolution">Corriger</button></div>`);
+          }
+          else {
+            html.push(status);
+          }
         }
-
-        html.push(`<tr>
-          <td class="torrent-name" title="${res.name}" style="border-bottom-width:0;">${filename}</td>
-          <td style="border-bottom-width:0;white-space:nowrap">${status==='Téléchargement'?'<div class="donut"><div class="donut-spinner" style="border-width:2px"></div><span>Téléchargement</span></div>':status}</td>
+        html.push(`</td>
           <td style="border-bottom-width:0;white-space:nowrap">${Math.round(res.rx_pct/100)}%
         </tr>
         <tr>
-          <td colspan="3" style="text-align:right;white-space:nowrap;">
-            ${res.status === 'stopped' || status === 'Erreur' ? '<button data-id="' + res.id + '" type="button" class="btn-play"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="blue"><path d="m384-312 264-168-264-168v336Zm96.28 216Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"/></svg> <span>Reprendre</span></button>' : ''}
-            ${status === '✓ Terminé' ? '' : '<button data-id="' + res.id +'" type="button" class="btn-stop"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="blue"><path d="M360-336h72v-288h-72v288Zm168 0h72v-288h-72v288ZM480.28-96Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"/></svg> <span>Pause</span></button>'}
-            <button data-id="${res.id}" type="button" class="btn-end-erase"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="red"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z"/></svg> <span>Supprimer Tâche & Fichiers</span></button>
-            <button data-id="${res.id}" type="button" class="btn-end"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="green"><path d="M384-357 192-549l51-51 141 141 333-333 51 51-384 384ZM240-192v-72h480v72H240Z"/></svg><span>Supprimer Tâche</span></button>
-          </td>
-        </tr>`);
+          <td colspan="3" style="text-align:right;white-space:nowrap;">`);
+
+        if (res.status == "stopping") {
+          html.push('</td>');
+        } else {
+          if (res.status === 'stopped' || status === 'Erreur') {
+            html.push('<button data-id="' + res.id + '" type="button" class="btn-play"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="blue"><path d="m384-312 264-168-264-168v336Zm96.28 216Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"/></svg> <span>Reprendre</span></button>');
+          }
+          else if (status !== '✓ Terminé') {
+            html.push('<button data-id="' + res.id +'" type="button" class="btn-stop"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="blue"><path d="M360-336h72v-288h-72v288Zm168 0h72v-288h-72v288ZM480.28-96Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"/></svg> <span>Pause</span></button>');
+          }
+          html.push(`<button data-id="${res.id}" type="button" class="btn-end-erase"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="red"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z"/></svg> <span>Supprimer Tâche & Fichiers</span></button>
+              <button data-id="${res.id}" type="button" class="btn-end"><svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="green"><path d="M384-357 192-549l51-51 141 141 333-333 51 51-384 384ZM240-192v-72h480v72H240Z"/></svg><span>Supprimer Tâche</span></button>
+            </td>`);
+        }
+        html.push(`</tr>`);
       });
       document.querySelector('#downloads tbody').innerHTML = html.join('\n');
 
@@ -236,6 +258,9 @@ async function showDownloads() {
         });
       }
     }
+
+    await cleanIdToLinkStorage(downloads.map(d => d.id+''));
+
     _timeout = setTimeout(() => showDownloads(), 3000);
   } catch(err) {
     handleError(err, 'showDownloads');
@@ -341,5 +366,21 @@ function openCorrectPopup (id) {
       width: 450,
       height: 275
     });
+  });
+}
+
+function cleanIdToLinkStorage(idsToKeep) {
+  return chrome.storage.local.get('idToLink', function (res) {
+    const idToLink = res.idToLink || {};
+    let modified = false;
+    for (let id in idToLink) {
+      if (!idsToKeep.includes(id)) {
+        delete idToLink[id];
+        modified = true;
+      }
+    }
+    if (modified) {
+      return chrome.storage.local.set({ idToLink: idToLink });
+    }
   });
 }

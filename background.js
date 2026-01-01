@@ -316,6 +316,7 @@ async function sendBody(body) {
 async function watchQueue() {
   _watchQueueInProgress = true;
   let downloads = await getListDownloads();
+  //console.log("downloads => ", downloads);
   let inProgress = downloads.filter(res => !['stopped', 'stopping', 'error', 'done', 'seeding'].includes(res.status));
   // si tous les téléchargements sont terminés
   if (inProgress.length === 0 && downloads.length > 0) {

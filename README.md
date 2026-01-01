@@ -50,3 +50,7 @@ Dézipper le répertoire téléchargé, puis, selon votre navigateur :
     - Cliquer sur **"Mode Développeur"** (en haut à droite)
     - Cliquer sur **"Charger l'extension non empaquetée"**
     - Sélectionner le répertoire téléchargé précédemment
+
+## Soutenir ce projet
+
+Vous pouvez me faire un petit don [par CB via Lydia](https://pay.lydia.me/l?t=aymericd34k6) ou [via Paypal](https://www.paypal.com/paypalme/aymkdn). Merci !
